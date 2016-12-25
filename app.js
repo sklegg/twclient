@@ -4,7 +4,7 @@ var inStream = process.openStdin();
 var client = new net.Socket();
 client.connect(2002, '127.0.0.1', function() {
     console.log('connected');
-    client.write("hi. I'm new here");
+    client.write("init::user:password");
 });
 
 client.on('data', function(fromServer) {
@@ -22,6 +22,7 @@ inStream.addListener('data', function(command) {
     console.log('got ' + command + ' from user');    
     
     if (command == 'quit') {        
+        client.write('__QUIT__');
         client.destroy();
     } else {
         console.log("sent? " + client.write(command, null, function() {

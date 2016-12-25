@@ -1,0 +1,13 @@
+{
+  "name": "twclient",
+  "version": "0.0.1",
+  "author": "Scott Legg <sklegg@gmail.com>",
+  "license": "MIT",
+  "repository": {
+      "type": "git",
+      "url": "https://github.com/sklegg/twclient"
+  },
+  "description": "a client for twserver",
+  "dependencies": {
+  }
+}
