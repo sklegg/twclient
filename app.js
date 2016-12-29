@@ -6,16 +6,19 @@ var client = new net.Socket();
 
 cursor = ansi(process.stdout);
 
+sectors = {};
+
 client.connect(2002, '127.0.0.1', function() {
     console.log('connected');
-    /*client.write("init::user:password");*/
     writeMainHelp();
     writeCursor(2);
 });
 
-client.on('data', function(fromServerBuffer) {
-    //fromServerBuffer.toString('utf8');
+client.on('data', function(fromServerBuffer) {    
     console.log("got from server:" + fromServerBuffer.toString('utf8'));
+
+    /* update correct state object */
+
     writeCursor(2);
 });
 
@@ -69,4 +72,17 @@ function writeMainHelp() {
     .write("                        <!> Main Menu Help \n")
     .write("  <Q> Quit and Exit     <Z> DOCS             <V> View Game Status \n\n")
     .reset();
+}
+
+function updateState(serverData) {
+    var data = serverData || {};
+
+    /* check type */
+    if (serverData && serverData.type) {
+        if (serverData.type === 'SECTOR') {
+            sectors[serverData.id] = new Sector(serverData);
+        } else if (serverData.type === 'PORT') {
+
+        }
+    }
 }
