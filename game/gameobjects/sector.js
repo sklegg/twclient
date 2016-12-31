@@ -1,4 +1,4 @@
-class Sector {
+module.exports = class Sector {
     constructor(inSector) {
         this.sectorNumber = inSector.id;
         this.sectorName = inSector.sectorName;
@@ -6,9 +6,6 @@ class Sector {
         this.warps = inSector.neighbors;
         this.port = inSector.port;
     }
-
-    
-
 
     writeSector(cursor) {
         cursor.reset().bold()
@@ -23,6 +20,8 @@ class Sector {
                 .hex('#FFD700').write(': ')
                 .red().write(this.beacon.message + '\n')
         }
+
+        /* if this sector has a port, fetch and write short desc */
 
         cursor.hex('#32CD32').write('Warps to Sector(s) ')
             .hex('#FFD700').write(': ');

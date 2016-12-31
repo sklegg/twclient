@@ -1,31 +1,49 @@
-var net = require('net');
-var ansi = require('ansi');
+var net = require('net');       /* socket to server */
+var ansi = require('ansi');     /* ANSI colors */
 var inStream = process.openStdin();
 
 var client = new net.Socket();
 
+/* add ANSI functionality to stdout */
 cursor = ansi(process.stdout);
 
-sectors = {};
+/* include game objects */
+var Sector = require('./game/gameobjects/sector.js');
+var Port = require('./game/gameobjects/port.js');
 
+/* set up objects to hold current state */
+ports = {};
+sectors = {};
+currentContext = {
+    playerId: 'scott',
+    sectorId: 2,
+    portId: null
+};
+
+/* connect to server on startup */
 client.connect(2002, '127.0.0.1', function() {
     console.log('connected');
     writeMainHelp();
-    writeCursor(2);
+    writeCursor();
 });
 
+/* add handler for data arriving on socket */
 client.on('data', function(fromServerBuffer) {    
-    console.log("got from server:" + fromServerBuffer.toString('utf8'));
+    var fromServer = fromServerBuffer.toString('utf8');
+    console.log("got from server:" + fromServer);
 
     /* update correct state object */
+    updateState(fromServer);    
 
-    writeCursor(2);
+    writeCursor();
 });
 
+/* add handler for socket close event */
 client.on('close', function() {
     console.log('connection closed');
 });
 
+/* listen on stdin for user input */
 inStream.addListener('data', function(command) {
     command = command + '';
     command = command.replace(/\n$/, ''); /* dump newline */
@@ -44,14 +62,14 @@ inStream.addListener('data', function(command) {
     }
 });
 
-function writeCursor(sectorNumber) {
+function writeCursor() {
     cursor.reset().bold()
     .hex('#4B0082').write("Command [")
     .hex('#FFD700').write("TL=00:00:00")
     .hex('#4B0082').write("]")
     .white().write(":")
     .hex('#4B0082').write("[")
-    .cyan().write(sectorNumber + "")
+    .cyan().write(currentContext.sectorId + "")
     .hex('#4B0082').write("] (")
     .hex('#FFD700').write("?=Help")
     .hex('#4B0082').write(")? :")
@@ -81,8 +99,10 @@ function updateState(serverData) {
     if (serverData && serverData.type) {
         if (serverData.type === 'SECTOR') {
             sectors[serverData.id] = new Sector(serverData);
+            sectors[serverData.id].writeSector(cursor);
         } else if (serverData.type === 'PORT') {
-
+            ports[serverData.id] = new Port(serverData);
+            ports[serverData.id].writePortShort(cursor);
         }
     }
 }
