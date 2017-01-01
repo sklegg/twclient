@@ -30,7 +30,7 @@ client.connect(2002, '127.0.0.1', function() {
 /* add handler for data arriving on socket */
 client.on('data', function(fromServerBuffer) {    
     var fromServer = fromServerBuffer.toString('utf8');
-    console.log("got from server:" + fromServer);
+    //console.log("got from server:" + fromServer);
 
     /* update correct state object */
     updateState(fromServer);    
@@ -40,7 +40,8 @@ client.on('data', function(fromServerBuffer) {
 
 /* add handler for socket close event */
 client.on('close', function() {
-    console.log('connection closed');
+    console.error('* CONNECTION CLOSED *');
+    process.exit();
 });
 
 /* listen on stdin for user input */
@@ -48,17 +49,17 @@ inStream.addListener('data', function(command) {
     command = command + '';
     command = command.replace(/\n$/, ''); /* dump newline */
     
-    console.log('got ' + command + ' from user');    
+    //console.log('got ' + command + ' from user');    
     
     if (command == 'Q' || command == 'q') {        
         client.write('__QUIT__');
         client.destroy();
         process.exit();
     } else {
-        console.log("sent? " + client.write(command, null, 
+        client.write(command, null, 
         function() {
             //console.log('write complete.');
-        }));        
+        });        
     }
 });
 
@@ -94,15 +95,18 @@ function writeMainHelp() {
 
 function updateState(serverData) {
     var data = serverData || {};
+    console.log('--> data:' + data);
+    data = JSON.parse(data);
 
     /* check type */
-    if (serverData && serverData.type) {
-        if (serverData.type === 'SECTOR') {
-            sectors[serverData.id] = new Sector(serverData);
-            sectors[serverData.id].writeSector(cursor);
-        } else if (serverData.type === 'PORT') {
-            ports[serverData.id] = new Port(serverData);
-            ports[serverData.id].writePortShort(cursor);
+    if (data && data.type) {
+        console.log(data.type);
+        if (data.type === 'SECTOR') {
+            sectors[data.id] = new Sector(data);
+            sectors[data.id].writeSector(cursor);
+        } else if (data.type === 'PORT') {
+            ports[data.id] = new Port(data);
+            ports[data.id].writePortShort(cursor);
         }
     }
 }
