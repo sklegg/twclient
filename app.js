@@ -31,10 +31,14 @@ client.on('data', function(fromServerBuffer) {
     var fromServer = fromServerBuffer.toString('utf8');
     //console.log("got from server:" + fromServer);
 
-    /* update correct state object */
-    updateState(fromServer);    
+    if (fromServer.indexOf('Error') > 0) {
+        console.error('Server error!');
+    } else {
+        /* update correct state object */
+        updateState(fromServer);
 
-    writeCursor();
+        writeCursor();
+    }    
 });
 
 /* add handler for socket close event */
@@ -55,9 +59,13 @@ function handleCommand(cmd) {
     if (cmd === 'Q' || cmd === 'q') {        
         quitGame();
     } else if (cmd === 'nav.demo') {
-        navigateDemo.start(cursor);
+        navigateDemo.start(cursor, sector, gameState);
     } else if (cmd === 'trade.demo') {
-        tradeDemo.start(cursor);
+        //console.log(cache.sectors);
+        //console.log(gameState);
+        //console.log(cache.sectors[gameState.sectorId]);
+        tradeDemo.start(cursor, cache.sectors[gameState.sectorId], gameState);
+        writeCursor();
     } else {
         client.write(cmd, null, function() {
             //console.log('write complete.');
@@ -111,6 +119,7 @@ function updateState(serverData) {
         console.log(data.type);
         if (data.type === 'SECTOR') {
             cache.sectors[data.id] = new Sector(data);
+            gameState.sectorId = data.id;
             cache.sectors[data.id].writeSector(cursor);
         } else if (data.type === 'PORT') {
             cache.ports[data.id] = new Port(data);

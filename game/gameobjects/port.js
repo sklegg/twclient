@@ -11,6 +11,14 @@ module.exports = class Port {
         this.buysEquipment = inPort.buysEquipment;
         this.dockingLog = 'No current ship docking log on file.';
         
+        /* TODO: make this work for real */
+        this.currentFuel = 100;
+        this.currentOrganics = 100;
+        this.currentEquipment = 100;
+        this.maxFuel = 500;
+        this.maxOrganics = 500;
+        this.maxEquipment = 500;
+
     }
 
     writePortShort(cursor) {
@@ -30,15 +38,18 @@ module.exports = class Port {
     }
 
     writePortFull(cursor) {
-        console.log('writing port (full)');
+        //console.log('writing port (full)');
 
+        /* TODO: finish this */
         cursor.bold()
         .hex('#4B0082').write('Commerce Report for ' + this.portName + '\n\n\n')
         .write('-=-=-       Docking Log       -=-=-\n')
         .write(this.dockingLog + '\n\n')
         .hex('#336600').write(' Items    Status  Trading % of max OnBoard\n')
         .hex('#4B0082').write(' -----    ------  ------- -------- -------\n')
-        .cyan().write('Fuel Ore\nOrganics\nEquipment\n')
+                .cyan().write('Fuel Ore  Buying    ' + this.currentFuel + '     %     ???\n')
+                       .write('Organics  Selling   ' + this.currentOrganics + '     %   ???\n')
+                       .write('Equipment Selling   ' + this.currentEquipment + '     %   ???\n')
         .reset();
     }
 };
