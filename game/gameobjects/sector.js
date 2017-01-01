@@ -22,7 +22,7 @@ module.exports = class Sector {
         if (this.beacon) {
             cursor.hex('#4B0082').write("Beacon   ")
                 .hex('#FFD700').write(': ')
-                .red().write(this.beacon + '\n')
+                .red().write(this.beacon + '\n');
         }
 
         /* if this sector has a port, fetch and write short desc */
@@ -41,4 +41,4 @@ module.exports = class Sector {
     
         cursor.write('\n\n').reset();
     }
-}
+};

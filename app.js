@@ -8,17 +8,16 @@ var client = new net.Socket();
 cursor = ansi(process.stdout);
 
 /* include game objects */
+var gameState = require('./game/current_state.js');
 var Sector = require('./game/gameobjects/sector.js');
 var Port = require('./game/gameobjects/port.js');
 
+/* demos */
+var tradeDemo = require('./demos/trade_demo.js');
+var navigateDemo = require('./demos/navigate_demo.js');
+
 /* set up objects to hold current state */
-ports = {};
-sectors = {};
-currentContext = {
-    playerId: 'scott',
-    sectorId: 2,
-    portId: null
-};
+var cache = require('./game/object_cache.js');
 
 /* connect to server on startup */
 client.connect(2002, '127.0.0.1', function() {
@@ -48,20 +47,29 @@ client.on('close', function() {
 inStream.addListener('data', function(command) {
     command = command + '';
     command = command.replace(/\n$/, ''); /* dump newline */
-    
-    //console.log('got ' + command + ' from user');    
-    
-    if (command == 'Q' || command == 'q') {        
-        client.write('__QUIT__');
-        client.destroy();
-        process.exit();
+
+    handleCommand(command);
+});
+
+function handleCommand(cmd) {
+    if (cmd === 'Q' || cmd === 'q') {        
+        quitGame();
+    } else if (cmd === 'nav.demo') {
+        navigateDemo.start(cursor);
+    } else if (cmd === 'trade.demo') {
+        tradeDemo.start(cursor);
     } else {
-        client.write(command, null, 
-        function() {
+        client.write(cmd, null, function() {
             //console.log('write complete.');
         });        
     }
-});
+}
+
+function quitGame() {
+    client.write('__QUIT__');
+    client.destroy();
+    process.exit();
+}
 
 function writeCursor() {
     cursor.reset().bold()
@@ -70,7 +78,7 @@ function writeCursor() {
     .hex('#4B0082').write("]")
     .white().write(":")
     .hex('#4B0082').write("[")
-    .cyan().write(currentContext.sectorId + "")
+    .cyan().write(gameState.sectorId + "")
     .hex('#4B0082').write("] (")
     .hex('#FFD700').write("?=Help")
     .hex('#4B0082').write(")? :")
@@ -102,11 +110,11 @@ function updateState(serverData) {
     if (data && data.type) {
         console.log(data.type);
         if (data.type === 'SECTOR') {
-            sectors[data.id] = new Sector(data);
-            sectors[data.id].writeSector(cursor);
+            cache.sectors[data.id] = new Sector(data);
+            cache.sectors[data.id].writeSector(cursor);
         } else if (data.type === 'PORT') {
-            ports[data.id] = new Port(data);
-            ports[data.id].writePortShort(cursor);
+            cache.ports[data.id] = new Port(data);
+            cache.ports[data.id].writePortShort(cursor);
         }
     }
 }

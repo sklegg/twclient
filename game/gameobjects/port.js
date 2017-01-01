@@ -41,4 +41,4 @@ module.exports = class Port {
         .cyan().write('Fuel Ore\nOrganics\nEquipment\n')
         .reset();
     }
-}
+};
