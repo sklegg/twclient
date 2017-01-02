@@ -1,11 +1,18 @@
 var net = require('net');       /* socket to server */
 var ansi = require('ansi');     /* ANSI colors */
-var inStream = process.openStdin();
-
-var client = new net.Socket();
+const readline = require('readline'); 
 
 /* add ANSI functionality to stdout */
-cursor = ansi(process.stdout);
+var cursor = ansi(process.stdout);
+
+/* get the fun started */
+var inStream = process.openStdin(); 
+var outStream = cursor;
+const rl = readline.createInterface({
+  input: inStream,
+  output: outStream,
+  prompt: 'tw2002> '
+});
 
 /* include game objects */
 var gameState = require('./game/current_state.js');
@@ -20,9 +27,9 @@ var navigateDemo = require('./demos/navigate_demo.js');
 var cache = require('./game/object_cache.js');
 
 /* connect to server on startup */
+var client = new net.Socket();
 client.connect(2002, '127.0.0.1', function() {
-    console.log('connected');
-    writeMainHelp();
+    console.log('* CONNECTED *');    
     writeCursor();
 });
 
@@ -44,29 +51,21 @@ client.on('data', function(fromServerBuffer) {
 /* add handler for socket close event */
 client.on('close', function() {
     console.error('* CONNECTION CLOSED *');
-    process.exit();
-});
-
-/* listen on stdin for user input */
-inStream.addListener('data', function(command) {
-    command = command + '';
-    command = command.replace(/\n$/, ''); /* dump newline */
-
-    handleCommand(command);
+    quitGame();
 });
 
 function handleCommand(cmd) {
     if (cmd === 'Q' || cmd === 'q') {        
         quitGame();
+    } else if (cmd === '?') {
+        writeMainHelp();
     } else if (cmd === 'nav.demo') {
         navigateDemo.start(cursor, sector, gameState);
-    } else if (cmd === 'trade.demo') {
-        //console.log(cache.sectors);
-        //console.log(gameState);
-        //console.log(cache.sectors[gameState.sectorId]);
+    } else if (cmd === 'trade.demo') {        
         tradeDemo.start(cursor, cache.sectors[gameState.sectorId], gameState);
         writeCursor();
     } else {
+        /* for demo/testing, send input directly to server */
         client.write(cmd, null, function() {
             //console.log('write complete.');
         });        
@@ -76,6 +75,7 @@ function handleCommand(cmd) {
 function quitGame() {
     client.write('__QUIT__');
     client.destroy();
+    rl.close();
     process.exit();
 }
 
@@ -89,8 +89,14 @@ function writeCursor() {
     .cyan().write(gameState.sectorId + "")
     .hex('#4B0082').write("] (")
     .hex('#FFD700').write("?=Help")
-    .hex('#4B0082').write(")? :")
+    .hex('#4B0082').write(")?:")
     .reset();
+
+    //rl.prompt(true);
+    rl.question(' ', (answer) => {
+        handleMainMenu(answer);
+        //rl.close();
+    });
 }
 
 function writeMainHelp() {
@@ -107,6 +113,11 @@ function writeMainHelp() {
     .write("                        <!> Main Menu Help \n")
     .write("  <Q> Quit and Exit     <Z> DOCS             <V> View Game Status \n\n")
     .reset();
+}
+
+function handleMainMenu(command) {
+    console.log("handleMainMenu: " , command);
+    handleCommand(command);
 }
 
 function updateState(serverData) {
