@@ -1,6 +1,6 @@
-var net = require('net');       /* socket to server */
-var ansi = require('ansi');     /* ANSI colors */
-const readline = require('readline'); 
+var net = require('net');               /* socket to server */
+var ansi = require('ansi');             /* ANSI colors */
+var reader  = require('readline-sync');   /* read input */
 
 /* add ANSI functionality to stdout */
 var cursor = ansi(process.stdout);
@@ -8,11 +8,6 @@ var cursor = ansi(process.stdout);
 /* get the fun started */
 var inStream = process.openStdin(); 
 var outStream = cursor;
-const rl = readline.createInterface({
-  input: inStream,
-  output: outStream,
-  prompt: 'tw2002> '
-});
 
 /* include game objects */
 var gameState = require('./game/current_state.js');
@@ -25,6 +20,8 @@ var navigateDemo = require('./demos/navigate_demo.js');
 
 /* set up objects to hold current state */
 var cache = require('./game/object_cache.js');
+
+var gameIO = {out: cursor, in: reader};
 
 /* connect to server on startup */
 var client = new net.Socket();
@@ -60,9 +57,9 @@ function handleCommand(cmd) {
     } else if (cmd === '?') {
         writeMainHelp();
     } else if (cmd === 'nav.demo') {
-        navigateDemo.start(cursor, sector, gameState);
+        navigateDemo.start(gameIO, sector, gameState);
     } else if (cmd === 'trade.demo') {        
-        tradeDemo.start(cursor, cache.sectors[gameState.sectorId], gameState);
+        tradeDemo.start(gameIO, cache.sectors[gameState.sectorId], gameState);
         writeCursor();
     } else {
         /* for demo/testing, send input directly to server */
@@ -75,7 +72,7 @@ function handleCommand(cmd) {
 function quitGame() {
     client.write('__QUIT__');
     client.destroy();
-    rl.close();
+    reader.close();
     process.exit();
 }
 
@@ -91,12 +88,9 @@ function writeCursor() {
     .hex('#FFD700').write("?=Help")
     .hex('#4B0082').write(")?:")
     .reset();
-
-    //rl.prompt(true);
-    rl.question(' ', (answer) => {
-        handleMainMenu(answer);
-        //rl.close();
-    });
+    
+    var answer = reader.question(' ');
+    handleMainMenu(answer);        
 }
 
 function writeMainHelp() {

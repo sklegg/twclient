@@ -9,7 +9,9 @@
   },
   "description": "a client for twserver",
   "dependencies": {
-    "ansi": "^0.3.1"
+    "ansi": "^0.3.1",
+    "jshint": "^2.9.4",
+    "readline-sync": "^1.4.5"
   },
   "jshintConfig": {
     "esversion": 6
